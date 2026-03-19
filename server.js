@@ -27,8 +27,8 @@ let orders = [
 
 // RPA calls this to see if there is work
 app.get('/rpa/task', (req, res) => {
-    const task = orders.find(o => o.status === "PENDING");
-    task ? res.json(task) : res.status(404).send("No tasks");
+    const tasks = orders.filter(o => o.status === "PENDING");
+    tasks.length > 0 ? res.json(tasks) : res.status(404).send("No tasks");
 });
 
 // RPA calls this to send the price back
