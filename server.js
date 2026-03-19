@@ -2,6 +2,10 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
+
+
+// Some orders for testing and making render woeking before deployment.
+
 // A simple in-memory queue for testing
 let orders = [
     { id: "866289388", status: "PENDING", price: null },
