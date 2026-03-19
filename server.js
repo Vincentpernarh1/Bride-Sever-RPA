@@ -33,15 +33,17 @@ app.get('/rpa/task', (req, res) => {
 
 // RPA calls this to send the price back
 app.post('/rpa/result', (req, res) => {
-    const { id, price } = req.body;
-    const order = orders.find(o => o.id === id);
-    if (order) {
-        order.price = price;
-        order.status = "COMPLETED";
-        console.log(`✅ Order ${id} updated with price: ${price}`);
-        return res.json({ success: true });
-    }
-    res.status(404).send("Order not found");
+    
+    const results = Array.isArray(req.body) ? req.body : [req.body];
+    results.forEach(({ id, price ,status}) => {
+        const order = orders.find(o => o.id === id);
+        if (order) {
+            order.price = price;
+            order.status = status === 'success' ? "COMPLETED" : "FAILED";
+            console.log(`✅ Order ${id} updated with price: ${price}`);
+        }
+    });
+    res.json({ success: true });
 });
 
 const PORT = process.env.PORT || 3000;
