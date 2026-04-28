@@ -98,7 +98,8 @@ app.post('/trigger-sync', (req, res) => {
 });
 
 // VM calls this to get SAP sync tasks (similar to /rpa/task)
-app.get('/rpa/sap-sync', (req, res) => {
+// Supporting both endpoint names for compatibility
+app.get(['/rpa/sap-sync', '/rpa-synchronize-sap'], (req, res) => {
     if (sapSyncQueue.length > 0) {
         console.log(`📤 VM requesting SAP sync tasks: Sending ${sapSyncQueue.length} tasks`);
         const tasks = [...sapSyncQueue];
