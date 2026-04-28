@@ -1,6 +1,10 @@
 const express = require('express');
+const path = require('path');
 const app = express();
 app.use(express.json());
+app.use(express.static('public'));
+const dotenv = require('dotenv');
+dotenv.config();
 
 
 
@@ -48,6 +52,73 @@ app.post('/rpa/result', (req, res) => {
         }
     });
     res.json({ success: true });
+});
+
+// Frontend triggers this endpoint to send SAP sync data to VM
+app.post('/trigger-sync', async (req, res) => {
+    try {
+        // TODO: Configure your VM endpoint URL here
+        const VM_ENDPOINT = process.env.VM_ENDPOINT ;
+
+        console.log("VM Endpoint:", VM_ENDPOINT);
+        
+        // Take 6 PENDING orders and transform them to SAP sync format
+        const pendingOrders = orders.filter(o => o.status === "PENDING").slice(0, 6);
+        
+        const tasks = pendingOrders.map(order => ({
+            id: order.id,
+            synchronize: true,
+            transportadora: "TRANSPORTADORA_" + order.id.slice(-3),
+            modal: "MODAL_" + order.id.slice(-2),
+            frete: (Math.random() * 1000 + 500).toFixed(2),
+            planejamento: "PLAN_" + order.id.slice(-4),
+            status: "PENDING_SYNC"
+        }));
+
+        console.log(`🔄 Trigger SAP Sync: Sending ${tasks.length} orders to VM`);
+        console.log('📦 Data:', JSON.stringify(tasks, null, 2));
+
+        // Send data to VM endpoint using fetch (Node.js 18+) or you can use axios
+        const response = await fetch(VM_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(tasks)
+        });
+
+        const responseData = await response.text();
+        let parsedData;
+        try {
+            parsedData = JSON.parse(responseData);
+        } catch {
+            parsedData = responseData;
+        }
+
+        if (response.ok) {
+            console.log(`✅ VM responded successfully:`, parsedData);
+            res.json({ 
+                success: true, 
+                message: `Sent ${tasks.length} orders to VM`,
+                ordersSent: tasks.length,
+                vmResponse: parsedData
+            });
+        } else {
+            console.log(`⚠️ VM responded with error:`, parsedData);
+            res.status(response.status).json({ 
+                success: false, 
+                message: 'VM returned error',
+                vmResponse: parsedData 
+            });
+        }
+    } catch (error) {
+        console.error("❌ Error triggering sync:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Failed to trigger synchronization", 
+            error: error.message 
+        });
+    }
 });
 
 const PORT = process.env.PORT || 3000;

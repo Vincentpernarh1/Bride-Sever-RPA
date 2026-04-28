@@ -11,6 +11,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vincentpernarh1/Bride-Sever-RPA.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Vincentpernarh1/Bride-Sever-RPA/issues"
+  },
+  "homepage": "https://github.com/Vincentpernarh1/Bride-Sever-RPA#readme"
 }
