@@ -83,12 +83,16 @@
         <h1>🚀 RPA SAP Synchronization</h1>
         
         <div class="info">
-            <strong>Info:</strong> This will send 6 approved orders to your VM for SAP synchronization processing.
+            <strong>How it works:</strong><br>
+            1. Click button to queue 6 orders for SAP sync<br>
+            2. Your VM will pull these tasks from the server<br>
+            3. VM processes and syncs to SAP<br>
+            4. VM sends results back
         </div>
         
         <div style="margin-top: 20px;">
             <button class="sync-button" id="syncButton" onclick="triggerSync()">
-                Trigger SAP Sync
+                Queue Orders for SAP Sync
             </button>
         </div>
         
@@ -106,7 +110,7 @@
             // Disable button and show loading
             button.disabled = true;
             statusDiv.className = 'status loading';
-            statusDiv.textContent = '⏳ Triggering synchronization...';
+            statusDiv.textContent = '⏳ Queueing orders for synchronization...';
             responseDiv.innerHTML = '';
             
             try {
@@ -121,15 +125,18 @@
                 
                 if (response.ok) {
                     statusDiv.className = 'status success';
-                    statusDiv.textContent = '✅ Synchronization triggered successfully!';
+                    statusDiv.textContent = `✅ Successfully queued ${data.ordersQueued || 0} orders! (Total in queue: ${data.totalInQueue || 0})`;
                     
                     responseDiv.innerHTML = `
-                        <h3>Response Details:</h3>
+                        <h3>Queued Orders:</h3>
                         <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                            <strong>Next Step:</strong> Your VM will automatically pull these tasks by calling <code>GET /rpa/sap-sync</code>
+                        </div>
                     `;
                 } else {
                     statusDiv.className = 'status error';
-                    statusDiv.textContent = '❌ Error: ' + (data.message || 'Failed to trigger sync');
+                    statusDiv.textContent = '❌ Error: ' + (data.message || 'Failed to queue orders');
                     
                     responseDiv.innerHTML = `
                         <h3>Error Details:</h3>

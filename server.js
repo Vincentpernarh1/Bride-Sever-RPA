@@ -6,6 +6,7 @@ app.use(express.static('public'));
 const dotenv = require('dotenv');
 dotenv.config();
 
+localhost = 'http://localhost';
 
 
 // Some orders for testing and making render woeking before deployment.
@@ -33,6 +34,9 @@ let orders = [
     { id: "866201768", status: "PENDING", price: null }
 ];
 
+// Queue for SAP synchronization tasks
+let sapSyncQueue = [];
+
 // RPA calls this to see if there is work
 app.get('/rpa/task', (req, res) => {
     const tasks = orders.filter(o => o.status === "PENDING");
@@ -54,14 +58,9 @@ app.post('/rpa/result', (req, res) => {
     res.json({ success: true });
 });
 
-// Frontend triggers this endpoint to send SAP sync data to VM
-app.post('/trigger-sync', async (req, res) => {
+// Frontend triggers this endpoint to queue SAP sync tasks
+app.post('/trigger-sync', (req, res) => {
     try {
-        // TODO: Configure your VM endpoint URL here
-        const VM_ENDPOINT = process.env.VM_ENDPOINT ;
-
-        console.log("VM Endpoint:", VM_ENDPOINT);
-        
         // Take 6 PENDING orders and transform them to SAP sync format
         const pendingOrders = orders.filter(o => o.status === "PENDING").slice(0, 6);
         
@@ -75,53 +74,65 @@ app.post('/trigger-sync', async (req, res) => {
             status: "PENDING_SYNC"
         }));
 
-        console.log(`🔄 Trigger SAP Sync: Sending ${tasks.length} orders to VM`);
-        console.log('📦 Data:', JSON.stringify(tasks, null, 2));
+        // Add tasks to the queue
+        sapSyncQueue.push(...tasks);
 
-        // Send data to VM endpoint using fetch (Node.js 18+) or you can use axios
-        const response = await fetch(VM_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(tasks)
+        console.log(`✅ Queued ${tasks.length} orders for SAP sync. Total in queue: ${sapSyncQueue.length}`);
+        console.log('📦 Queued Data:', JSON.stringify(tasks, null, 2));
+
+        res.json({ 
+            success: true, 
+            message: `Queued ${tasks.length} orders for SAP synchronization`,
+            ordersQueued: tasks.length,
+            totalInQueue: sapSyncQueue.length,
+            tasks: tasks
         });
-
-        const responseData = await response.text();
-        let parsedData;
-        try {
-            parsedData = JSON.parse(responseData);
-        } catch {
-            parsedData = responseData;
-        }
-
-        if (response.ok) {
-            console.log(`✅ VM responded successfully:`, parsedData);
-            res.json({ 
-                success: true, 
-                message: `Sent ${tasks.length} orders to VM`,
-                ordersSent: tasks.length,
-                vmResponse: parsedData
-            });
-        } else {
-            console.log(`⚠️ VM responded with error:`, parsedData);
-            res.status(response.status).json({ 
-                success: false, 
-                message: 'VM returned error',
-                vmResponse: parsedData 
-            });
-        }
     } catch (error) {
-        console.error("❌ Error triggering sync:", error);
+        console.error("❌ Error queueing sync tasks:", error);
         res.status(500).json({ 
             success: false, 
-            message: "Failed to trigger synchronization", 
+            message: "Failed to queue synchronization tasks", 
             error: error.message 
         });
     }
 });
 
+// VM calls this to get SAP sync tasks (similar to /rpa/task)
+app.get('/rpa/sap-sync', (req, res) => {
+    if (sapSyncQueue.length > 0) {
+        console.log(`📤 VM requesting SAP sync tasks: Sending ${sapSyncQueue.length} tasks`);
+        const tasks = [...sapSyncQueue];
+        res.json(tasks);
+    } else {
+        console.log(`📭 VM requesting SAP sync tasks: Queue is empty`);
+        res.status(404).json({ message: "No SAP sync tasks available" });
+    }
+});
+
+// VM calls this to send SAP sync results back
+app.post('/rpa/sap-result', (req, res) => {
+    const results = Array.isArray(req.body) ? req.body : [req.body];
+    
+    results.forEach(({ id, status, error }) => {
+        // Remove completed task from queue
+        const index = sapSyncQueue.findIndex(task => task.id === id);
+        if (index !== -1) {
+            sapSyncQueue.splice(index, 1);
+            console.log(`✅ SAP Sync completed for order ${id}: ${status}${error ? ' - ' + error : ''}`);
+        }
+        
+        // Update the order in main orders array if needed
+        const order = orders.find(o => o.id === id);
+        if (order) {
+            order.status = status === 'success' ? 'SAP_SYNCED' : 'SAP_FAILED';
+        }
+    });
+    
+    console.log(`📥 SAP Sync results received. Remaining in queue: ${sapSyncQueue.length}`);
+    res.json({ success: true, remainingInQueue: sapSyncQueue.length });
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Bridge Server live on port ${PORT}`));
+app.listen(PORT, () => console.log(`Bridge Server live on port ${localhost}:${PORT}`));
 
 // To activate the server again last test
