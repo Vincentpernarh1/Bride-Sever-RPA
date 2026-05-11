@@ -25,7 +25,7 @@ let orders = [
     { id: "866289935", status: "DONE", price: null },
     { id: "866289947", status: "PENDING", price: null },
     { id: "866254996", status: "PENDING", price: null },
-    { id: "866289830", status: "DONE", price: null },
+    { id: "866289830", status: "PENDING", price: null },
     { id: "866290044", status: "PENDING", price: null },
     { id: "866289933", status: "PENDING", price: null },
     { id: "866289910", status: "DONE", price: null },
