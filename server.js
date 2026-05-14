@@ -17,8 +17,8 @@ let orders = [
     { id: "866254978", status: "PENDING", price: null },
     { id: "866290058", status: "PENDING", price: null },
     { id: "866290063", status: "PENDING", price: null },
-    { id: "866284067", status: "PENDING", price: null },
-    { id: "866201274", status: "PENDING", price: null },
+    { id: "866284067", status: "DONE", price: null },
+    { id: "866201274", status: "DONE", price: null },
     { id: "866289930", status: "PENDING", price: null },
     { id: "866289917", status: "PENDING", price: null },
     { id: "866254995", status: "PENDING", price: null },
@@ -27,10 +27,10 @@ let orders = [
     { id: "866254996", status: "PENDING", price: null },
     { id: "866289830", status: "PENDING", price: null },
     { id: "866290044", status: "PENDING", price: null },
-    { id: "866289933", status: "PENDING", price: null },
+    { id: "866289933", status: "DONE", price: null },
     { id: "866289910", status: "PENDING", price: null },
     { id: "866289832", status: "PENDING", price: null },
-    { id: "898549777", status: "PENDING", price: null },
+    { id: "898549777", status: "DONE", price: null },
     { id: "866201768", status: "PENDING", price: null }
 ];
 
