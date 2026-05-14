@@ -14,21 +14,21 @@ localhost = 'http://localhost';
 // A simple in-memory queue for testing
 let orders = [
     { id: "866289388", status: "PENDING", price: null },
-    { id: "866254978", status: "DONE", price: null },
+    { id: "866254978", status: "PENDING", price: null },
     { id: "866290058", status: "PENDING", price: null },
     { id: "866290063", status: "PENDING", price: null },
     { id: "866284067", status: "PENDING", price: null },
     { id: "866201274", status: "PENDING", price: null },
-    { id: "866289930", status: "DONE", price: null },
+    { id: "866289930", status: "PENDING", price: null },
     { id: "866289917", status: "PENDING", price: null },
-    { id: "866254995", status: "DONE", price: null },
-    { id: "866289935", status: "DONE", price: null },
+    { id: "866254995", status: "PENDING", price: null },
+    { id: "866289935", status: "PENDING", price: null },
     { id: "866289947", status: "PENDING", price: null },
     { id: "866254996", status: "PENDING", price: null },
     { id: "866289830", status: "PENDING", price: null },
     { id: "866290044", status: "PENDING", price: null },
     { id: "866289933", status: "PENDING", price: null },
-    { id: "866289910", status: "DONE", price: null },
+    { id: "866289910", status: "PENDING", price: null },
     { id: "866289832", status: "PENDING", price: null },
     { id: "898549777", status: "PENDING", price: null },
     { id: "866201768", status: "PENDING", price: null }
@@ -36,6 +36,9 @@ let orders = [
 
 // Queue for SAP synchronization tasks
 let sapSyncQueue = [];
+
+// Log array to store all RPA results
+let resultsLog = [];
 
 // RPA calls this to see if there is work
 app.get('/rpa/task', (req, res) => {
@@ -54,8 +57,22 @@ app.post('/rpa/result', (req, res) => {
             order.status = status === 'success' ? "COMPLETED" : "FAILED";
             console.log(`✅ Order ${id} updated with price: ${price}`);
         }
+        
+        // Log the result with timestamp
+        resultsLog.push({
+            id,
+            price,
+            status,
+            timestamp: new Date().toISOString(),
+            fullData: req.body
+        });
     });
     res.json({ success: true });
+});
+
+// Endpoint to get all logged results
+app.get('/rpa/results-log', (req, res) => {
+    res.json(resultsLog);
 });
 
 // Frontend triggers this endpoint to queue SAP sync tasks
